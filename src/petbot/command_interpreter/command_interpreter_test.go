@@ -1,9 +1,9 @@
-package event_interpreter
+package command_interpreter
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"petbot/event_interpreter/event_interpreterfakes"
+	"petbot/command_interpreter/command_interpreterfakes"
 	"github.com/nlopes/slack"
 	"testing"
 	"petbot/models/modelsfakes"
@@ -16,7 +16,7 @@ func TestMessageInterpreter(t *testing.T) {
 
 var _ = Describe("EventInterpreter", func() {
 
-	var fakeRTM *event_interpreterfakes.FakeSlackRTM
+	var fakeRTM *command_interpreterfakes.FakeSlackRTM
 	var fakeDataStore *modelsfakes.FakeDataStore
 	var err error
 	var initialDataStoreRecordSize = 0
@@ -27,7 +27,7 @@ var _ = Describe("EventInterpreter", func() {
 	key := modelsfakes.Key{owner, petname}
 
 	BeforeEach(func() {
-		fakeRTM = new(event_interpreterfakes.FakeSlackRTM)
+		fakeRTM = new(command_interpreterfakes.FakeSlackRTM)
 		fakeDataStore, err = modelsfakes.Init("fakeDriverName", "fakeDataSourceName")
 
 		var testUsers []slack.User
@@ -46,7 +46,7 @@ var _ = Describe("EventInterpreter", func() {
 			message.User = "petbot"
 
 			It("shouldn't respond", func() {
-				ExecuteCommand(&message, fakeRTM, fakeDataStore)
+				InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 				Expect(fakeRTM.SendMessageCallCount()).To(Equal(0))
 			})
@@ -61,7 +61,7 @@ var _ = Describe("EventInterpreter", func() {
 				Context("and no command", func() {
 					It("should respond with an empty command error message", func(){
 						message.Text = "<@petbot>"
-						ExecuteCommand(&message, fakeRTM, fakeDataStore)
+						InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 						Expect(fakeRTM.SendMessageCallCount()).To(Equal(1))
 						Expect(fakeRTM.NewOutgoingMessageCallCount()).To(Equal(1))
@@ -73,7 +73,7 @@ var _ = Describe("EventInterpreter", func() {
 				Context("and an unrecognized command", func() {
 					It("should respond with an invalid command error message", func() {
 						message.Text = "<@petbot> covfefe"
-						ExecuteCommand(&message, fakeRTM, fakeDataStore)
+						InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 						Expect(fakeRTM.SendMessageCallCount()).To(Equal(1))
 						Expect(fakeRTM.NewOutgoingMessageCallCount()).To(Equal(1))
@@ -86,7 +86,7 @@ var _ = Describe("EventInterpreter", func() {
 					Context("and has no pets saved", func() {
 						It("should return an empty list", func() {
 							message.Text = "<@petbot> /all"
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							Expect(fakeDataStore.GetAllPetsCallCount).To(Equal(1))
 
@@ -105,7 +105,7 @@ var _ = Describe("EventInterpreter", func() {
 						It("should return one pet", func() {
 							message.Text = "<@petbot> /all"
 
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							Expect(fakeDataStore.GetAllPetsCallCount).To(Equal(1))
 
@@ -128,7 +128,7 @@ var _ = Describe("EventInterpreter", func() {
 						It("should save the pet successfully", func() {
 							message.Text = "<@petbot> /add petname"
 
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							Expect(fakeDataStore.AddPetInfoCallCount).To(Equal(1))
 							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
@@ -150,7 +150,7 @@ var _ = Describe("EventInterpreter", func() {
 						It("should return an useful error message and not save pet info", func() {
 							message.Text = "<@petbot> /add petname"
 
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							response := fakeDataStore.AddPetInfo(owner, petname)
 							Expect(response).To(Equal("Duplicate"))
@@ -169,7 +169,7 @@ var _ = Describe("EventInterpreter", func() {
 						It("should save the pet successfully", func() {
 							message.Text = "<@petbot> /add petname"
 
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							expectSaveToDataStoreIsSuccessful(fakeDataStore, key)
 							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
@@ -187,7 +187,7 @@ var _ = Describe("EventInterpreter", func() {
 						It("should save the pet successfully", func() {
 							message.Text = "<@petbot> /add petname"
 
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							expectSaveToDataStoreIsSuccessful(fakeDataStore, key)
 							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
@@ -205,7 +205,7 @@ var _ = Describe("EventInterpreter", func() {
 						It("should save the pet successfully", func() {
 							message.Text = "<@petbot> /add petname"
 
-							ExecuteCommand(&message, fakeRTM, fakeDataStore)
+							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							expectSaveToDataStoreIsSuccessful(fakeDataStore, key)
 							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
@@ -218,35 +218,10 @@ var _ = Describe("EventInterpreter", func() {
 				It("shouldn't respond", func() {
 					message.Text = "hi"
 
-					ExecuteCommand(&message, fakeRTM, fakeDataStore)
+					InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 					Expect(fakeRTM.SendMessageCallCount()).To(Equal(0))
 				})
-			})
-		})
-	})
-
-	Describe("Listening to typing event", func() {
-		event := slack.UserTypingEvent{}
-
-		Context("User just started typing", func() {
-			It("should not send a message", func() {
-				ParseTypingEvent(&event, fakeRTM)
-				Expect(fakeRTM.SendMessageCallCount()).To(Equal(0))
-			})
-		})
-
-		Context("User has typed for awhile and counter has hit 3", func() {
-			It("should send a message", func() {
-				event.User = "senderID"
-				ParseTypingEvent(&event, fakeRTM)
-				ParseTypingEvent(&event, fakeRTM)
-				ParseTypingEvent(&event, fakeRTM)
-
-				Expect(fakeRTM.SendMessageCallCount()).To(Equal(1))
-				Expect(fakeRTM.NewOutgoingMessageCallCount()).To(Equal(1))
-				responseMessage, _ := fakeRTM.NewOutgoingMessageArgsForCall(0)
-				Expect(responseMessage).To(Not(BeEmpty()))
 			})
 		})
 	})

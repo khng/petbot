@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/nlopes/slack"
-	"petbot/event_interpreter"
+	"petbot/command_interpreter"
 
 	_ "github.com/go-sql-driver/mysql"
 	"log"
@@ -46,10 +46,7 @@ Loop:
 
 			case *slack.MessageEvent:
 				fmt.Printf("Message received")
-				event_interpreter.ExecuteCommand(ev, rtm, db)
-
-			case *slack.UserTypingEvent:
-				event_interpreter.ParseTypingEvent(ev, rtm)
+				command_interpreter.InterpretCommand(ev, rtm, db)
 
 			case *slack.RTMError:
 				fmt.Printf("Error: %s\n", ev.Error())
