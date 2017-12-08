@@ -1,0 +1,4 @@
+/pkg
+/bin
+.DS_STORE
+.idea/
