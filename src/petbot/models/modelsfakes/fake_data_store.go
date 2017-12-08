@@ -4,23 +4,27 @@ import (
 	"petbot/models"
 )
 
-type Key struct {
+type FakePetTableKey struct {
 	OwnerName, PetName string
 }
 
-type Columns struct {
+type FakePetTableColumns struct {
 	OwnerName, PetName string
 }
 
-type FakeDataStore struct {
-	Data                map[Key] Columns
+type FakePetTable struct {
+	FakePetTableData    map[FakePetTableKey]FakePetTableColumns
 	GetAllPetsCallCount int
 	AddPetInfoCallCount int
 }
 
+type FakeDataStore struct {
+	FakePetTable
+}
+
 func Init(_ string, _ string) (*FakeDataStore, error) {
 	fakeDataStore := new(FakeDataStore)
-	fakeDataStore.Data = make(map[Key] Columns)
+	fakeDataStore.FakePetTableData = make(map[FakePetTableKey]FakePetTableColumns)
 	fakeDataStore.GetAllPetsCallCount = 0
 	return fakeDataStore, nil
 }
@@ -30,7 +34,7 @@ func (fakeDataStore *FakeDataStore) CreatePetTable() {
 
 func (fakeDataStore *FakeDataStore) GetAllPets() ([]*models.Pet, error) {
 	fakeDataStore.GetAllPetsCallCount++
-	values := fakeDataStore.Data
+	values := fakeDataStore.FakePetTableData
 	petArray := make([]*models.Pet, 0)
 	for _, columns := range values {
 		owner := columns.OwnerName
@@ -46,7 +50,7 @@ func (fakeDataStore *FakeDataStore) AddPetInfo(owner string, petName string) (st
 	if fakeDataStore.HasPetInfo(owner, petName) {
 		return "Duplicate"
 	} else {
-		fakeDataStore.Data[Key{owner, petName}] = Columns{owner, petName}
+		fakeDataStore.FakePetTableData[FakePetTableKey{owner, petName}] = FakePetTableColumns{owner, petName}
 		return "Added"
 	}
 }
@@ -55,11 +59,11 @@ func (fakeDataStore *FakeDataStore) UpdatePetInfo(owner string, petName string, 
 }
 
 func (fakeDataStore *FakeDataStore) HasPetInfo(owner string, petName string) (bool) {
-	value, exists := fakeDataStore.Data[Key{owner, petName}]
+	value, exists := fakeDataStore.FakePetTableData[FakePetTableKey{owner, petName}]
 	if exists && value.PetName == petName {
 		return true
 	} else {
-		fakeDataStore.Data[Key{owner,petName}] = Columns{owner,petName}
+		fakeDataStore.FakePetTableData[FakePetTableKey{owner,petName}] = FakePetTableColumns{owner,petName}
 		return false
 	}
 }

@@ -24,7 +24,7 @@ var _ = Describe("EventInterpreter", func() {
 
 	owner := "owner"
 	petname := "petname"
-	key := modelsfakes.Key{owner, petname}
+	key := modelsfakes.FakePetTableKey{owner, petname}
 
 	BeforeEach(func() {
 		fakeRTM = new(command_interpreterfakes.FakeSlackRTM)
@@ -93,12 +93,12 @@ var _ = Describe("EventInterpreter", func() {
 							response, _ := fakeDataStore.GetAllPets()
 							Expect(response).To(BeEmpty())
 
-							Expect(fakeDataStore.Data).To(BeEmpty())
+							Expect(fakeDataStore.FakePetTableData).To(BeEmpty())
 						})
 					})
 					Context("and has a pet saved", func() {
 						BeforeEach(func() {
-							fakeDataStore.Data = make(map[modelsfakes.Key] modelsfakes.Columns)
+							fakeDataStore.FakePetTableData = make(map[modelsfakes.FakePetTableKey] modelsfakes.FakePetTableColumns)
 							fakeDataStore.AddPetInfo(owner, petname)
 						})
 
@@ -113,7 +113,7 @@ var _ = Describe("EventInterpreter", func() {
 							Expect(len(response)).To(Equal(1))
 							Expect(response[0].Owner).To(Equal(owner))
 							Expect(response[0].PetName).To(Equal(petname))
-							Expect(len(fakeDataStore.Data)).To(Equal(1))
+							Expect(len(fakeDataStore.FakePetTableData)).To(Equal(1))
 						})
 					})
 				})
@@ -121,7 +121,7 @@ var _ = Describe("EventInterpreter", func() {
 				Context("and /add", func() {
 					Context("there are no pets saved", func() {
 						BeforeEach(func() {
-							fakeDataStore.Data = make(map[modelsfakes.Key] modelsfakes.Columns)
+							fakeDataStore.FakePetTableData = make(map[modelsfakes.FakePetTableKey] modelsfakes.FakePetTableColumns)
 							initialDataStoreRecordSize = 0
 						})
 
@@ -131,9 +131,9 @@ var _ = Describe("EventInterpreter", func() {
 							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							Expect(fakeDataStore.AddPetInfoCallCount).To(Equal(1))
-							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
+							Expect(len(fakeDataStore.FakePetTableData)).To(Equal(initialDataStoreRecordSize + 1))
 
-							column := fakeDataStore.Data[modelsfakes.Key{owner, petname}]
+							column := fakeDataStore.FakePetTableData[modelsfakes.FakePetTableKey{owner, petname}]
 							Expect(column.OwnerName).To(Equal(owner))
 							Expect(column.PetName).To(Equal(petname))
 						})
@@ -142,7 +142,7 @@ var _ = Describe("EventInterpreter", func() {
 					Context("the owner and pet has already been saved", func() {
 						BeforeEach(func() {
 							initialDataStoreRecordSize = 0
-							fakeDataStore.Data = make(map[modelsfakes.Key] modelsfakes.Columns)
+							fakeDataStore.FakePetTableData = make(map[modelsfakes.FakePetTableKey] modelsfakes.FakePetTableColumns)
 							fakeDataStore.AddPetInfo(owner, petname)
 							initialDataStoreRecordSize ++
 						})
@@ -154,14 +154,14 @@ var _ = Describe("EventInterpreter", func() {
 
 							response := fakeDataStore.AddPetInfo(owner, petname)
 							Expect(response).To(Equal("Duplicate"))
-							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize))
+							Expect(len(fakeDataStore.FakePetTableData)).To(Equal(initialDataStoreRecordSize))
 						})
 					})
 
 					Context("another owner has the same pet name saved", func() {
 						BeforeEach(func() {
 							initialDataStoreRecordSize = 0
-							fakeDataStore.Data = make(map[modelsfakes.Key] modelsfakes.Columns)
+							fakeDataStore.FakePetTableData = make(map[modelsfakes.FakePetTableKey] modelsfakes.FakePetTableColumns)
 							fakeDataStore.AddPetInfo("anotherOwner", petname)
 							initialDataStoreRecordSize ++
 						})
@@ -172,14 +172,14 @@ var _ = Describe("EventInterpreter", func() {
 							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							expectSaveToDataStoreIsSuccessful(fakeDataStore, key)
-							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
+							Expect(len(fakeDataStore.FakePetTableData)).To(Equal(initialDataStoreRecordSize + 1))
 						})
 					})
 
 					Context("the owner has other pets saved", func() {
 						BeforeEach(func() {
 							initialDataStoreRecordSize = 0
-							fakeDataStore.Data = make(map[modelsfakes.Key]modelsfakes.Columns)
+							fakeDataStore.FakePetTableData = make(map[modelsfakes.FakePetTableKey]modelsfakes.FakePetTableColumns)
 							fakeDataStore.AddPetInfo(owner, "otherpetname")
 							initialDataStoreRecordSize ++
 						})
@@ -190,14 +190,14 @@ var _ = Describe("EventInterpreter", func() {
 							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							expectSaveToDataStoreIsSuccessful(fakeDataStore, key)
-							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
+							Expect(len(fakeDataStore.FakePetTableData)).To(Equal(initialDataStoreRecordSize + 1))
 						})
 					})
 
 					Context("the owner and pet has not been saved before", func() {
 						BeforeEach(func() {
 							initialDataStoreRecordSize = 0
-							fakeDataStore.Data = make(map[modelsfakes.Key]modelsfakes.Columns)
+							fakeDataStore.FakePetTableData = make(map[modelsfakes.FakePetTableKey]modelsfakes.FakePetTableColumns)
 							fakeDataStore.AddPetInfo("otherowner", "otherpetname")
 							initialDataStoreRecordSize ++
 						})
@@ -208,7 +208,7 @@ var _ = Describe("EventInterpreter", func() {
 							InterpretCommand(&message, fakeRTM, fakeDataStore)
 
 							expectSaveToDataStoreIsSuccessful(fakeDataStore, key)
-							Expect(len(fakeDataStore.Data)).To(Equal(initialDataStoreRecordSize + 1))
+							Expect(len(fakeDataStore.FakePetTableData)).To(Equal(initialDataStoreRecordSize + 1))
 						})
 					})
 				})
@@ -227,8 +227,8 @@ var _ = Describe("EventInterpreter", func() {
 	})
 })
 
-func expectSaveToDataStoreIsSuccessful(fakeDataStore *modelsfakes.FakeDataStore, key modelsfakes.Key) {
-	column, exists := fakeDataStore.Data[key]
+func expectSaveToDataStoreIsSuccessful(fakeDataStore *modelsfakes.FakeDataStore, key modelsfakes.FakePetTableKey) {
+	column, exists := fakeDataStore.FakePetTableData[key]
 	Expect(exists).To(BeTrue())
 	Expect(column.OwnerName).To(Equal(key.OwnerName))
 	Expect(column.PetName).To(Equal(key.PetName))
